@@ -1,0 +1,58 @@
+name: CI/CD Pipeline for UrlShortener
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Шаг 2: Установка JDK
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # Шаг 3: Сборка с Maven
+      - name: Build with Maven
+        run: mvn clean compile
+
+      # Шаг 4: Запуск тестов
+      - name: Run tests
+        run: mvn test
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Шаг 2: Деплой через SSH
+      - name: Deploy to server
+        run: |
+          ssh -o StrictHostKeyChecking=no user@your-server-ip << 'EOF'
+          cd /path/to/your/project
+          git pull origin main
+          mvn clean package
+          java -jar target/UrlShortener-1.0-SNAPSHOT.jar &
+          EOF
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
