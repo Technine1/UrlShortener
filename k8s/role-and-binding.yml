@@ -1,23 +1,22 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: default
+  namespace: url-shortener
   name: url-shortener-role
 rules:
   - apiGroups: [""]
-    resources: ["pods", "services", "deployments"]
-    verbs: ["get", "watch", "list", "create", "update", "delete"]
-
+    resources: ["pods", "services", "deployments", "secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: url-shortener-rolebinding
-  namespace: default
+  namespace: url-shortener
 subjects:
   - kind: ServiceAccount
-    name: url-shortener-sa
-    namespace: default
+    name: url-shortener-service-account
+    namespace: url-shortener
 roleRef:
   kind: Role
   name: url-shortener-role
