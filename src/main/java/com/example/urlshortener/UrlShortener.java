@@ -1,5 +1,3 @@
-// Основная структура проекта для сервиса сокращения ссылок
-// src/main/java/com/example/urlshortener
 package com.example.urlshortener;
 
 import java.io.*;
@@ -8,8 +6,8 @@ import java.util.concurrent.*;
 
 public class UrlShortener {
     private final Map<String, UrlData> urlStore = new ConcurrentHashMap<>(); // Хранилище ссылок
-    private String baseDomain = "http://short.ly/"; // Базовый домен для коротких ссылок
-    private Properties config = new Properties();
+    private final String baseDomain = "http://short.ly/"; // Базовый домен для коротких ссылок
+    private final Properties config = new Properties();
 
     public UrlShortener() {
         loadConfig();
@@ -65,14 +63,12 @@ public class UrlShortener {
     // Загрузка конфигурации из файла
     private void loadConfig() {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-            if (input == null) {
-                throw new FileNotFoundException("config.properties not found in classpath");
+            if (input != null) {
+                config.load(input);
+                System.out.println("Конфигурация успешно загружена.");
             }
-            config.load(input);
-            System.out.println("Конфигурация успешно загружена.");
         } catch (IOException e) {
             System.err.println("Не удалось загрузить файл конфигурации: " + e.getMessage());
-            throw new RuntimeException("Failed to load configuration", e);
         }
     }
 
@@ -87,7 +83,7 @@ public class UrlShortener {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(() -> {
             long now = System.currentTimeMillis();
-            urlStore.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
+            urlStore.entrySet().removeIf(entry -> entry.getValue().isExpired());
         }, 1, 1, TimeUnit.HOURS);
     }
 
@@ -103,7 +99,7 @@ public class UrlShortener {
             this.originalUrl = originalUrl;
             this.userId = userId;
             this.expiryTime = System.currentTimeMillis() + ttlSeconds * 1000;
-            this.clickLimit = Integer.MAX_VALUE; // По умолчанию без ограничения
+            this.clickLimit = Integer.MAX_VALUE;
             this.clickCount = 0;
         }
 
@@ -116,11 +112,7 @@ public class UrlShortener {
         }
 
         public boolean isExpired() {
-            return isExpired(System.currentTimeMillis());
-        }
-
-        public boolean isExpired(long currentTime) {
-            return currentTime > expiryTime;
+            return System.currentTimeMillis() > expiryTime;
         }
 
         public void incrementClickCount() {
