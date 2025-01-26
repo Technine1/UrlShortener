@@ -32,7 +32,7 @@ jobs:
 
       # Шаг 3: Сборка с Maven
       - name: Build with Maven
-        run: mvn clean compile
+        run: mvn clean package
 
       # Шаг 4: Запуск тестов
       - name: Run tests
@@ -48,11 +48,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Шаг 2: Логин в DockerHub
+      # Шаг 2: Убедитесь, что JAR-файл существует
+      - name: Verify JAR file exists
+        run: |
+          if [ ! -f "target/URLShortener-1.0-SNAPSHOT.jar" ]; then
+            echo "Error: JAR file not found in target directory."
+            exit 1
+          fi
+
+      # Шаг 3: Логин в DockerHub
       - name: Log in to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # Шаг 3: Сборка и пуш Docker-образа
+      # Шаг 4: Сборка и пуш Docker-образа
       - name: Build and Push Docker Image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/urlshortener:${{ github.sha }} .
@@ -106,5 +114,5 @@ jobs:
           cd /path/to/your/project
           git pull origin master
           mvn clean package
-          java -jar target/UrlShortener-1.0-SNAPSHOT.jar &
+          java -jar target/URLShortener-1.0-SNAPSHOT.jar &
           EOF
